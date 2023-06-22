@@ -1,9 +1,4 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.util.Arrays;
-import java.util.List;
+import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -18,10 +13,13 @@ public class Main {
         saveGame("C://Games/savegames/save2.dat", gameProgress2);
         saveGame("C://Games/savegames/save3.dat", gameProgress3);
 
-        List<String> listOfPaths = Arrays.asList("C://Games/savegames/save1.dat", "C://Games/savegames/save2.dat",
-                "C://Games/savegames/save3.dat");
 
-        zipFiles("C://Games/savegames/zip.zip", listOfPaths);
+        String[] saveFilesPath = new String[3];
+        saveFilesPath[0] = "C://Games/savegames/save1.dat";
+        saveFilesPath[1] = "C://Games/savegames/save2.dat";
+        saveFilesPath[2] = "C://Games/savegames/save3.dat";
+
+        zipFiles("C://Games/savegames/zip.zip", saveFilesPath);
     }
 
     public static void saveGame(String filePath, GameProgress gameProgress) {
@@ -34,32 +32,24 @@ public class Main {
         }
     }
 
-    public static void zipFiles(String zipPath, List<String> listOfPaths) {
-
-        try (ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(zipPath))) {
-            FileInputStream fis;
-
-            for (String strPath : listOfPaths) {
-                fis = new FileInputStream(strPath);
-                ZipEntry entry = new ZipEntry("packed_" + strPath);
-                zout.putNextEntry(entry);
-                byte[] buffer = new byte[fis.available()];
-                fis.read(buffer);
-                zout.write(buffer);
-                zout.closeEntry();
-                fis.close();
+    public static void zipFiles(String path, String[] saveFilesPath) {
+        try (ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(path))) {
+            for (String savePath : saveFilesPath) {
+                try (FileInputStream fis = new FileInputStream(savePath)) {
+                    ZipEntry entry = new ZipEntry(new File(savePath).getName());
+                    zout.putNextEntry(entry);
+                    byte[] buffer = new byte[fis.available()];
+                    fis.read(buffer);
+                    zout.write(buffer, 0, buffer.length);
+                    zout.closeEntry();
+                } catch (FileNotFoundException e) {
+                    System.out.println(e.getMessage());
+                }
+                File tempFile = new File(savePath);
+                tempFile.delete();
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
-        }
-
-        for (String filePath : listOfPaths) {
-            File file = new File(filePath);
-            if (file.delete()) {
-                System.out.println("Файл удален");
-            } else {
-                System.out.println("Что то пошло не так");
-            }
         }
     }
 }
